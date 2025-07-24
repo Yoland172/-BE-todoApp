@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { LoginUserDto } from './dto/LoginUser.dto';
 import { UserService } from './user.service';
 import { RegisterUserDto } from './dto/registerUser.dto';
+import { TokenPayload } from 'src/auth/utils/types';
 
 @Controller('user')
 export class UserController {
@@ -17,8 +18,8 @@ export class UserController {
 
   @Get('info')
   @UseGuards(JwtAuthGuard)
-  async getUserInfo() {
-    console.log('work');
+  async getUserInfo(@Req() req: Request & { user: TokenPayload }) {
+    return await this.userService.getUserInfoById(req.user.sub);
   }
 
   @Post('/login')

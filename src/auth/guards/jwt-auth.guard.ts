@@ -23,20 +23,17 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx
       .switchToHttp()
-      .getRequest<
-        Request & { cookies: Record<string, string>; userInfoPayload?: any }
-      >();
+      .getRequest<Request & { user?: TokenPayload }>();
 
     const token = this.extractTokenFromHeader(req);
-    console.log(token);
 
     if (!token) throw new UnauthorizedException('No access token.');
-    return true;
 
     let payload: TokenPayload;
+
     try {
       payload = await this.jwt.verifyAsync(token, {
-        secret: this.cfg.get<string>('ACCESS_REFRESH_TOKEN_SECRET'),
+        secret: this.cfg.get<string>('ACCESS_TOKEN_SECRET'),
       });
     } catch {
       throw new UnauthorizedException('Invalid or expired token.');
@@ -45,6 +42,15 @@ export class JwtAuthGuard implements CanActivate {
     const isUserExist = await this.userRepo.exists({
       where: { id: payload.sub, email: payload.email, role: payload.role },
     });
+
+    if (!isUserExist) throw new UnauthorizedException('Invalid token');
+
+    if (new Date(payload.exp * 1000) < new Date())
+      throw new UnauthorizedException('Token outdated.');
+
+    req.user = payload;
+
+    return true;
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

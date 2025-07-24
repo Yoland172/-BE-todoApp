@@ -63,6 +63,16 @@ export class UserService {
     return { user, ...generatedTokens };
   }
 
+  async getUserInfoById(id: number) {
+    try {
+      const user = await this.userRepo.findOneBy({ id: id });
+      if (!user) throw new UnauthorizedException('Invalid credentials');
+      return user;
+    } catch {
+      throw new InternalServerErrorException('something went wrong :(');
+    }
+  }
+
   async register(body: RegisterUserDto) {
     try {
       const user = await this.createUser({
