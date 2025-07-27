@@ -1,0 +1,21 @@
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { BaseDateEntity } from './utils/base-date.entity';
+import User from './user.entity';
+import { TodoItem } from './todoItem.entity';
+import { TodoListShares } from './todoListShare.entity';
+
+@Entity()
+export default class TodoList extends BaseDateEntity {
+  @ManyToOne(() => User, (user) => user.todoLists)
+  @JoinColumn({ name: 'ownerId' })
+  owner: User;
+
+  @Column()
+  title: string;
+
+  @OneToMany(() => TodoItem, (item) => item.listItem)
+  todoItems: TodoItem[];
+
+  @OneToMany(() => TodoListShares, (shares) => shares.listItem)
+  shares: TodoListShares[];
+}

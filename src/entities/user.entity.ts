@@ -6,6 +6,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import Credential from './credential.entity';
+import TodoList from './todoList.entity';
+import { TodoItem } from './todoItem.entity';
+import { TodoListShares } from './todoListShare.entity';
 
 export enum Roles {
   ADMIN = 'admin',
@@ -34,4 +37,16 @@ export default class User {
     cascade: true,
   })
   credentials: Credential[];
+
+  @OneToMany(() => TodoList, (todoList) => todoList.owner)
+  todoLists: TodoList[];
+
+  @OneToMany(() => TodoItem, (todoItem) => todoItem.createdBy)
+  todoItems: TodoItem[];
+
+  @OneToMany(() => TodoListShares, (shareLists) => shareLists.user)
+  sharesLists: TodoListShares[];
+
+  @OneToMany(() => TodoListShares, (shareLists) => shareLists.grantedUser)
+  sharedLists: TodoListShares[];
 }
