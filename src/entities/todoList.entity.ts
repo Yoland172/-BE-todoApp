@@ -13,9 +13,11 @@ export default class TodoList extends BaseDateEntity {
   @Column()
   title: string;
 
-  @OneToMany(() => TodoItem, (item) => item.listItem)
+  @OneToMany(() => TodoItem, (item) => item.listItem, { cascade: ['remove'] })
   todoItems: TodoItem[];
 
-  @OneToMany(() => TodoListShares, (shares) => shares.listItem)
+  @OneToMany(() => TodoListShares, (shares) => shares.listItem, {
+    cascade: ['remove'],
+  })
   shares: TodoListShares[];
 }
