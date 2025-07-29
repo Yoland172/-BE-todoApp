@@ -18,12 +18,16 @@ import User from 'src/entities/user.entity';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('ACCESS_TOKEN_SECRET'),
-        signOptions: { expiresIn: '15m' },
+        signOptions: { expiresIn: '15d' },
       }),
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard],
-  exports: [AuthService], // ★ make AuthService visible outside
+  exports: [
+    AuthService,
+    JwtModule,
+    TypeOrmModule.forFeature([Credential, User]),
+  ],
 })
 export class AuthModule {}
