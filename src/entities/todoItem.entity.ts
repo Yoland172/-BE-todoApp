@@ -1,7 +1,15 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  RelationId,
+} from 'typeorm';
 import { BaseDateEntity } from './utils/base-date.entity';
 import TodoList from './todoList.entity';
 import User from './user.entity';
+import { TodoItemShares } from './todoItemsShare.entity';
 
 export enum Status {
   BACKLOG = 'backlog',
@@ -23,7 +31,16 @@ export class TodoItem extends BaseDateEntity {
   @JoinColumn({ name: 'listId' })
   listItem?: TodoList;
 
+  @RelationId((todo: TodoItem) => todo.listItem)
+  listId!: number;
+
   @Column()
+  title: string;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ enum: Status, default: Status.BACKLOG })
   status: Status;
 
   @Column({ nullable: true })
@@ -35,4 +52,7 @@ export class TodoItem extends BaseDateEntity {
   @ManyToOne(() => User, (user) => user.todoItems)
   @JoinColumn({ name: 'ownerId' })
   createdBy: User;
+
+  @OneToMany(() => TodoItemShares, (shares) => shares.todoItem)
+  shares: TodoItemShares[];
 }

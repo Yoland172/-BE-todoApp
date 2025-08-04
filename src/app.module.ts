@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { TodoListModule } from './todo-list/todo-list.module';
+import { TodoItemModule } from './todo-item/todo-item.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { TodoListModule } from './todo-list/todo-list.module';
     AuthModule,
     UserModule,
     TodoListModule,
+    TodoItemModule,
   ],
   controllers: [AppController],
   providers: [AppService],

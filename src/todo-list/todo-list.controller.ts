@@ -8,8 +8,8 @@ import {
   Delete,
   UseGuards,
   Req,
-  HttpStatus,
   HttpCode,
+  Put,
 } from '@nestjs/common';
 import { TodoListService } from './todo-list.service';
 import { CreateTodoListDto } from './dto/create-todo-list.dto';
@@ -57,5 +57,18 @@ export class TodoListController {
     return {
       message: 'deleted successfully',
     };
+  }
+
+  @Put(':listId/connect/:itemId')
+  async connect(
+    @Param('listId') listId: string,
+    @Param('itemId') itemId: string,
+    @Req() req: WithAuthRequest,
+  ) {
+    await this.todoListService.connectItemToList(
+      req.user.sub,
+      +listId,
+      +itemId,
+    );
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -8,13 +9,16 @@ import { UpdateTodoListDto } from './dto/update-todo-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import TodoList from 'src/entities/todoList.entity';
-import User from 'src/entities/user.entity';
+import { TodoListShares } from 'src/entities/todoListShare.entity';
+import { TodoItemService } from 'src/todo-item/todo-item.service';
 
 @Injectable()
 export class TodoListService {
   constructor(
+    private readonly todoItemService: TodoItemService,
     @InjectRepository(TodoList) private todoListRepo: Repository<TodoList>,
-    @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(TodoListShares)
+    private todoListShares: Repository<TodoListShares>,
   ) {}
 
   async create(userId: number, createTodoListDto: CreateTodoListDto) {
@@ -49,12 +53,12 @@ export class TodoListService {
     return `This action returns all todoList`;
   }
 
-  async findOne(id: number, userId: number, isUserOwner: boolean = false) {
+  async findOne(id: number, userId: number, includeShared: boolean = true) {
     const todoList = await this.todoListRepo.findOne({
       where: [
         { id, owner: { id: userId } },
         {
-          ...(!isUserOwner && { id, shares: { user: { id: userId } } }),
+          ...(includeShared && { id, shares: { user: { id: userId } } }),
         },
       ],
       relations: {
@@ -76,13 +80,15 @@ export class TodoListService {
     userId: number,
     updateTodoListDto: UpdateTodoListDto,
   ) {
-    const todoList = await this.findOne(id, userId, true);
+    const updatedList = await this.todoListRepo.update(
+      {
+        owner: { id: userId },
+        id,
+      },
+      updateTodoListDto,
+    );
 
-    todoList.title = updateTodoListDto.title ?? todoList.title;
-
-    await this.todoListRepo.save(todoList);
-
-    return todoList;
+    return updatedList;
   }
 
   async remove(id: number, userId: number) {
@@ -99,5 +105,28 @@ export class TodoListService {
     }
 
     await this.todoListRepo.remove(todoList);
+  }
+
+  async connectItemToList(userId: number, listId: number, itemId: number) {
+    const item = await this.todoItemService.findOne(itemId, userId, false);
+    const list = await this.findOne(listId, userId, false);
+
+    if (item.listId)
+      throw new BadRequestException('this item already connected to List');
+
+    const updatedItem = await this.todoItemService.update(
+      itemId,
+      {
+        listId: listId,
+      },
+      userId,
+    );
+
+    return updatedItem;
+    // console.log(item, list);
+    // const [list, item] = await Promise.all([
+    //   this.todoListRepo.findOneOrFail({ where: { id: listId } }),
+    //   this.todoItemRepo.findOneOrFail({ where: { id: itemId } }),
+    // ]);
   }
 }
