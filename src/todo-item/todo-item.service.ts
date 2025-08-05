@@ -68,7 +68,7 @@ export class TodoItemService {
     const { listId, ...rest } = updateTodoItemDto;
     const payload: QueryDeepPartialEntity<TodoItem> = { ...rest };
     if (listId !== undefined) {
-      payload.listItem = listId ? { id: listId } : null; // null → зняти з-і списку
+      payload.listItem = listId ? { id: listId } : null;
     }
     const updatedItem = await this.todoItemRepo.update(
       { id, createdBy: { id: userId } },

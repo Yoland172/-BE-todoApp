@@ -117,7 +117,7 @@ export class TodoListService {
     const updatedItem = await this.todoItemService.update(
       itemId,
       {
-        listId: listId,
+        listId,
       },
       userId,
     );
