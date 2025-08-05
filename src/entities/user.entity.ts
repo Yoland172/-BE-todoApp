@@ -9,6 +9,7 @@ import Credential from './credential.entity';
 import TodoList from './todoList.entity';
 import { TodoItem } from './todoItem.entity';
 import { TodoListShares } from './todoListShare.entity';
+import { Attachment } from './attachment.entity';
 
 export enum Roles {
   ADMIN = 'admin',
@@ -57,4 +58,7 @@ export default class User {
     cascade: ['remove'],
   })
   sharedLists: TodoListShares[];
+
+  @OneToMany(() => Attachment, (attachment) => attachment.uploadedBy)
+  attachments: Attachment[];
 }

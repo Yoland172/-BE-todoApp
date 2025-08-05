@@ -3,6 +3,7 @@ import { BaseDateEntity } from './utils/base-date.entity';
 import User from './user.entity';
 import { TodoItem } from './todoItem.entity';
 import { TodoListShares } from './todoListShare.entity';
+import { Attachment } from './attachment.entity';
 
 @Entity()
 export default class TodoList extends BaseDateEntity {
@@ -20,4 +21,7 @@ export default class TodoList extends BaseDateEntity {
     cascade: ['remove'],
   })
   shares: TodoListShares[];
+
+  @OneToMany(() => Attachment, (attachments) => attachments.todoList)
+  attachments: Attachment[];
 }

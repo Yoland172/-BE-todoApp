@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { TodoListModule } from './todo-list/todo-list.module';
 import { TodoItemModule } from './todo-item/todo-item.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { TodoItemModule } from './todo-item/todo-item.module';
     UserModule,
     TodoListModule,
     TodoItemModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

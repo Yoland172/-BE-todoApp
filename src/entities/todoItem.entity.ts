@@ -10,6 +10,7 @@ import { BaseDateEntity } from './utils/base-date.entity';
 import TodoList from './todoList.entity';
 import User from './user.entity';
 import { TodoItemShares } from './todoItemsShare.entity';
+import { Attachment } from './attachment.entity';
 
 export enum Status {
   BACKLOG = 'backlog',
@@ -55,4 +56,7 @@ export class TodoItem extends BaseDateEntity {
 
   @OneToMany(() => TodoItemShares, (shares) => shares.todoItem)
   shares: TodoItemShares[];
+
+  @OneToMany(() => Attachment, (attachment) => attachment.todoItem)
+  attachments: Attachment[];
 }
