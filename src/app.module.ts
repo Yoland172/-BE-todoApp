@@ -7,7 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { TodoListModule } from './todo-list/todo-list.module';
 import { TodoItemModule } from './todo-item/todo-item.module';
-import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { CloudinaryModule } from './fileUpload/fileUpload.module';
 
 @Module({
   imports: [

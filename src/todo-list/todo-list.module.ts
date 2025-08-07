@@ -15,5 +15,6 @@ import { TodoItemModule } from 'src/todo-item/todo-item.module';
   ],
   controllers: [TodoListController],
   providers: [TodoListService],
+  exports: [TodoListService],
 })
 export class TodoListModule {}

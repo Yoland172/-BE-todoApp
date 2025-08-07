@@ -1,14 +1,25 @@
 import { Module } from '@nestjs/common';
 import { CloudinaryService } from './cloudinary.service';
-import { CloudinaryController } from './cloudinary.controller';
+import { CloudinaryController } from './fileUpload.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, ConfigOptions } from 'cloudinary';
+import { AuthModule } from 'src/auth/auth.module';
+import { FileUploadService } from './fileUpload.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Attachment } from 'src/entities/attachment.entity';
+import { TodoListModule } from 'src/todo-list/todo-list.module';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [
+    AuthModule,
+    ConfigModule,
+    TypeOrmModule.forFeature([Attachment]),
+    TodoListModule,
+  ],
   controllers: [CloudinaryController],
   providers: [
     CloudinaryService,
+    FileUploadService,
     {
       provide: 'CLOUDINARY',
       inject: [ConfigService],
