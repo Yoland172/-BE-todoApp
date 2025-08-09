@@ -4,6 +4,7 @@ import {
   UploadApiOptions,
   UploadApiResponse,
 } from 'cloudinary';
+import { inferResourceType } from './utils';
 
 @Injectable()
 export class CloudinaryService {
@@ -27,10 +28,25 @@ export class CloudinaryService {
   async destroy(
     publicId: string,
     resource_type: 'image' | 'video' | 'raw',
-  ): Promise<{ result: 'ok' | 'not_found' }> {
+  ): Promise<{ result: 'ok' | 'not found' }> {
     return this.cloudinary.uploader.destroy(publicId, {
       type: 'authenticated',
       resource_type: resource_type,
+    });
+  }
+
+  async getPrivateDownloadUrl(
+    publicId: string,
+    contentType: string,
+    isDownloadLink: boolean = false,
+  ) {
+    const [resource_type, format] = contentType.split('/');
+    const expires_at = Math.floor(Date.now() / 1000) + 2 * 60; //NOTE: 10 minutes
+    return await this.cloudinary.utils.private_download_url(publicId, format, {
+      type: 'private',
+      resource_type,
+      expires_at,
+      attachment: isDownloadLink,
     });
   }
 }

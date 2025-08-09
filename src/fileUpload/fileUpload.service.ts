@@ -1,6 +1,7 @@
 import { fileTypeFromBuffer } from 'file-type';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,15 +11,37 @@ import { Attachment, MimeTypeEnum } from 'src/entities/attachment.entity';
 import { Repository } from 'typeorm';
 import { TodoListService } from 'src/todo-list/todo-list.service';
 import { inferResourceType } from './utils';
+import { TodoItemService } from 'src/todo-item/todo-item.service';
+import { isNumber } from 'class-validator';
+import TodoList from 'src/entities/todoList.entity';
+import { TodoItem } from 'src/entities/todoItem.entity';
 
 @Injectable()
 export class FileUploadService {
   constructor(
     private readonly cloudinaryService: CloudinaryService,
     private readonly todoListService: TodoListService,
+    private readonly todoItemService: TodoItemService,
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
   ) {}
+
+  async getFile(userId: number, fileId: number) {
+    const file = await this.attachmentRepo.findOne({
+      where: [
+        { uploadedBy: { id: userId }, id: fileId },
+        { id: fileId, todoList: { owner: { id: userId } } },
+        { id: fileId, todoList: { shares: { user: { id: userId } } } },
+        { id: fileId, todoItem: { createdBy: { id: userId } } },
+        { id: fileId, todoList: { shares: { user: { id: userId } } } },
+      ],
+    });
+
+    if (!file)
+      throw new BadRequestException('user don`t have access or fileId invalid');
+
+    return file;
+  }
 
   async attachFileToList(
     userId: number,
@@ -39,24 +62,46 @@ export class FileUploadService {
     const folder = `list/${listId}`;
     const res = await this.cloudinaryService.uploadBuffer(file, {
       folder,
-      type: 'authenticated',
-      use_filename: true,
+      type: 'private',
+      eager: [
+        { width: 200, height: 200, crop: 'fill', gravity: 'auto' }, // thumbnail 200×200
+      ],
+      eager_async: true,
     });
+
+    console.log(res);
 
     const attachment = this.attachmentRepo.create({
       name: file.originalname,
       contentType: mime,
       sizeBytes: file.size,
-      url: res.secure_url,
+      publicId: res.public_id,
       assetId: res.asset_id,
       uploadedBy: { id: userId },
       todoList: { id: listId },
+      thumbnail: res.eager[0].url,
       duration: res.duration ?? null,
     });
 
     await this.attachmentRepo.save(attachment);
 
     return attachment;
+  }
+
+  async generateLinkToDownload(
+    userId: number,
+    fileId: number,
+    isDownloadLink: boolean,
+  ) {
+    const file = await this.getFile(userId, fileId);
+
+    const link = await this.cloudinaryService.getPrivateDownloadUrl(
+      file.publicId,
+      file.contentType,
+      isDownloadLink,
+    );
+
+    return link;
   }
 
   async deleteFileFromList(userId: number, fileId: number) {
@@ -74,16 +119,18 @@ export class FileUploadService {
 
     if (!item) throw new NotFoundException('not found related items');
 
-    const { assetId } = item;
+    const { publicId } = item;
 
     const res = await this.cloudinaryService.destroy(
-      assetId,
+      publicId,
       inferResourceType(item.contentType),
     );
 
-    if (res.result === 'not_found')
+    if (res.result === 'not found')
       throw new NotFoundException('not found any file');
 
-    return 'file succesfuly deleted';
+    await this.attachmentRepo.delete(fileId);
+
+    return { message: 'file deleted successfully' };
   }
 }

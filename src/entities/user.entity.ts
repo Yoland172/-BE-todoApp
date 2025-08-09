@@ -34,22 +34,22 @@ export default class User {
   credentials: Credential[];
 
   @OneToMany(() => TodoList, (todoList) => todoList.owner, {
-    cascade: ['remove'],
+    cascade: true,
   })
   todoLists: TodoList[];
 
   @OneToMany(() => TodoItem, (todoItem) => todoItem.createdBy, {
-    cascade: ['remove'],
+    cascade: true,
   })
   todoItems: TodoItem[];
 
   @OneToMany(() => TodoListShares, (shareLists) => shareLists.user, {
-    cascade: ['remove'],
+    cascade: true,
   })
   sharesLists: TodoListShares[];
 
   @OneToMany(() => TodoListShares, (shareLists) => shareLists.grantedUser, {
-    cascade: ['remove'],
+    cascade: true,
   })
   sharedLists: TodoListShares[];
 

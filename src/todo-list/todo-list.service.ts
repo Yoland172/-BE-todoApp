@@ -54,7 +54,7 @@ export class TodoListService {
   }
 
   async findOne(id: number, userId: number, includeShared: boolean = true) {
-    const todoList = await this.todoListRepo.findOne({
+    const todoList = await this.todoListRepo.findOneOrFail({
       where: [
         { id, owner: { id: userId } },
         {

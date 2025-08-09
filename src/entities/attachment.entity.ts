@@ -55,16 +55,16 @@ export class Attachment extends BaseDateEntity {
   name: string;
 
   @Column()
-  assetId: string;
-
-  @Column()
   contentType: MimeTypeEnum;
 
   @Column()
   sizeBytes: number;
 
   @Column()
-  url: string;
+  publicId: string;
+
+  @Column()
+  assetId: string;
 
   @Column({ nullable: true })
   thumbnail: string | null;

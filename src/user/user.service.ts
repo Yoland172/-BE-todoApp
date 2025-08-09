@@ -74,36 +74,32 @@ export class UserService {
   }
 
   async register(body: RegisterUserDto) {
-    try {
-      const user = await this.createUser({
-        name: body.name,
-        avatar: body.avatar,
-        email: body.email,
-      });
+    const user = await this.createUser({
+      name: body.name,
+      avatar: body.avatar,
+      email: body.email,
+    });
 
-      const hashedPassword = await bcrypt.hash(body.password, 12);
+    const hashedPassword = await bcrypt.hash(body.password, 12);
 
-      const userCredential = this.credentialRepo.create({
-        password: hashedPassword,
-        provider: Providers.LOCAL,
-        user,
-      });
+    const userCredential = this.credentialRepo.create({
+      password: hashedPassword,
+      provider: Providers.LOCAL,
+      user,
+    });
 
-      await this.credentialRepo.save(userCredential);
+    await this.credentialRepo.save(userCredential);
 
-      const tokens = await this.auth.generateTokens(
-        user.id,
-        user.email,
-        user.role,
-      );
+    const tokens = await this.auth.generateTokens(
+      user.id,
+      user.email,
+      user.role,
+    );
 
-      return {
-        id: user.id,
-        email: user.email,
-        ...tokens,
-      };
-    } catch {
-      throw new InternalServerErrorException('something went wrong :(');
-    }
+    return {
+      id: user.id,
+      email: user.email,
+      ...tokens,
+    };
   }
 }

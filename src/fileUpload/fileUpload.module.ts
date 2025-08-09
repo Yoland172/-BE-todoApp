@@ -8,6 +8,7 @@ import { FileUploadService } from './fileUpload.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Attachment } from 'src/entities/attachment.entity';
 import { TodoListModule } from 'src/todo-list/todo-list.module';
+import { TodoItemModule } from 'src/todo-item/todo-item.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TodoListModule } from 'src/todo-list/todo-list.module';
     ConfigModule,
     TypeOrmModule.forFeature([Attachment]),
     TodoListModule,
+    TodoItemModule,
   ],
   controllers: [CloudinaryController],
   providers: [

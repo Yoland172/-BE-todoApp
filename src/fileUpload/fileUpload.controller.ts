@@ -2,8 +2,10 @@ import {
   BadRequestException,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -39,6 +41,24 @@ export class CloudinaryController {
       +listId,
       file,
     );
+  }
+
+  @Get(':id')
+  async getLinkToDownload(
+    @Req() req: WithAuthRequest,
+    @Param('id') fileId: string,
+    @Query('downloadLink') isDownloadLink: boolean,
+  ) {
+    console.log(isDownloadLink);
+    const link = await this.fileUploadService.generateLinkToDownload(
+      +req.user.sub,
+      +fileId,
+      isDownloadLink,
+    );
+
+    return {
+      link,
+    };
   }
 
   @Delete(':id')
