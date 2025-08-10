@@ -65,6 +65,7 @@ export class TodoListService {
         owner: true,
         shares: { user: true },
         todoItems: true,
+        attachments: { uploadedBy: true },
       },
     });
     if (!todoList)

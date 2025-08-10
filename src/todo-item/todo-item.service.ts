@@ -51,7 +51,11 @@ export class TodoItemService {
           ...(includeShared && { id, shares: { user: { id: userId } } }),
         },
       ],
-      relations: { createdBy: true, shares: { user: true } },
+      relations: {
+        createdBy: true,
+        shares: { user: true },
+        attachments: { uploadedBy: true },
+      },
     });
 
     if (!todoItem)
