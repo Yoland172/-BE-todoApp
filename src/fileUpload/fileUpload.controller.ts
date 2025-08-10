@@ -43,6 +43,27 @@ export class CloudinaryController {
     );
   }
 
+  @Post('todoItem/:id/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 },
+    }),
+  )
+  async todoItemFileUpload(
+    @Req() req: WithAuthRequest,
+    @Param('id') listId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('file is required');
+
+    return await this.fileUploadService.attachFileToItem(
+      req.user.sub,
+      +listId,
+      file,
+    );
+  }
+
   @Get(':id')
   async getLinkToDownload(
     @Req() req: WithAuthRequest,

@@ -10,11 +10,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Attachment, MimeTypeEnum } from 'src/entities/attachment.entity';
 import { Repository } from 'typeorm';
 import { TodoListService } from 'src/todo-list/todo-list.service';
-import { inferResourceType } from './utils';
+import { AttachTo, buildUploadOptions, inferResourceType } from './utils';
 import { TodoItemService } from 'src/todo-item/todo-item.service';
-import { isNumber } from 'class-validator';
-import TodoList from 'src/entities/todoList.entity';
-import { TodoItem } from 'src/entities/todoItem.entity';
+import { UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class FileUploadService {
@@ -33,7 +31,7 @@ export class FileUploadService {
         { id: fileId, todoList: { owner: { id: userId } } },
         { id: fileId, todoList: { shares: { user: { id: userId } } } },
         { id: fileId, todoItem: { createdBy: { id: userId } } },
-        { id: fileId, todoList: { shares: { user: { id: userId } } } },
+        { id: fileId, todoItem: { shares: { user: { id: userId } } } },
       ],
     });
 
@@ -43,14 +41,35 @@ export class FileUploadService {
     return file;
   }
 
-  async attachFileToList(
-    userId: number,
-    listId: number,
+  async saveAttachmentInRepo(
     file: Express.Multer.File,
+    cloudinaryRes: UploadApiResponse,
+    propertyId: number,
+    userId: number,
+    mime: MimeTypeEnum,
+    attachTo: AttachTo,
   ) {
-    await this.todoListService.findOne(listId, userId);
+    const attachment = this.attachmentRepo.create({
+      name: file.originalname,
+      contentType: mime,
+      sizeBytes: file.size,
+      publicId: cloudinaryRes.public_id,
+      assetId: cloudinaryRes.asset_id,
+      uploadedBy: { id: userId },
+      ...(attachTo === AttachTo.LIST
+        ? { todoList: { id: propertyId } }
+        : { todoItem: { id: propertyId } }),
+      thumbnail: cloudinaryRes.eager?.[0]?.url ?? null,
+      duration: cloudinaryRes.duration ?? null,
+    });
 
-    const detected = await fileTypeFromBuffer(file.buffer);
+    await this.attachmentRepo.save(attachment);
+
+    return attachment;
+  }
+
+  async getMime(buffer: Buffer<ArrayBufferLike>) {
+    const detected = await fileTypeFromBuffer(buffer);
 
     if (!detected) throw new BadRequestException('Unknown format');
 
@@ -59,33 +78,53 @@ export class FileUploadService {
     if (!Object.values(MimeTypeEnum).includes(mime))
       throw new BadRequestException('Unsupported format');
 
-    const folder = `list/${listId}`;
-    const res = await this.cloudinaryService.uploadBuffer(file, {
-      folder,
-      type: 'private',
-      eager: [
-        { width: 200, height: 200, crop: 'fill', gravity: 'auto' }, // thumbnail 200×200
-      ],
-      eager_async: true,
-    });
+    return mime;
+  }
 
-    console.log(res);
+  async attachFileToList(
+    userId: number,
+    listId: number,
+    file: Express.Multer.File,
+  ) {
+    await this.todoListService.findOne(listId, userId, true);
 
-    const attachment = this.attachmentRepo.create({
-      name: file.originalname,
-      contentType: mime,
-      sizeBytes: file.size,
-      publicId: res.public_id,
-      assetId: res.asset_id,
-      uploadedBy: { id: userId },
-      todoList: { id: listId },
-      thumbnail: res.eager[0].url,
-      duration: res.duration ?? null,
-    });
+    const mime = await this.getMime(file.buffer);
 
-    await this.attachmentRepo.save(attachment);
+    const opts = buildUploadOptions(file, listId, AttachTo.LIST);
 
-    return attachment;
+    const res = await this.cloudinaryService.uploadBuffer(file, opts);
+
+    return await this.saveAttachmentInRepo(
+      file,
+      res,
+      listId,
+      userId,
+      mime,
+      AttachTo.LIST,
+    );
+  }
+
+  async attachFileToItem(
+    userId: number,
+    itemId: number,
+    file: Express.Multer.File,
+  ) {
+    await this.todoItemService.findOne(itemId, userId, true);
+
+    const mime = await this.getMime(file.buffer);
+
+    const opts = buildUploadOptions(file, itemId, AttachTo.ITEM);
+
+    const res = await this.cloudinaryService.uploadBuffer(file, opts);
+
+    return await this.saveAttachmentInRepo(
+      file,
+      res,
+      itemId,
+      userId,
+      mime,
+      AttachTo.ITEM,
+    );
   }
 
   async generateLinkToDownload(
@@ -105,25 +144,15 @@ export class FileUploadService {
   }
 
   async deleteFileFromList(userId: number, fileId: number) {
-    const item = await this.attachmentRepo.findOne({
-      where: {
-        id: fileId,
-        todoList: [
-          {
-            owner: { id: userId },
-          },
-          { shares: { user: { id: userId } } },
-        ],
-      },
-    });
+    const file = await this.getFile(userId, fileId);
 
-    if (!item) throw new NotFoundException('not found related items');
+    if (!file) throw new NotFoundException('not found related items');
 
-    const { publicId } = item;
+    const { publicId } = file;
 
     const res = await this.cloudinaryService.destroy(
       publicId,
-      inferResourceType(item.contentType),
+      inferResourceType(file.contentType),
     );
 
     if (res.result === 'not found')

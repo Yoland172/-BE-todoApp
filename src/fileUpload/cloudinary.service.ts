@@ -30,7 +30,7 @@ export class CloudinaryService {
     resource_type: 'image' | 'video' | 'raw',
   ): Promise<{ result: 'ok' | 'not found' }> {
     return this.cloudinary.uploader.destroy(publicId, {
-      type: 'authenticated',
+      type: 'private',
       resource_type: resource_type,
     });
   }
@@ -44,7 +44,7 @@ export class CloudinaryService {
     const expires_at = Math.floor(Date.now() / 1000) + 2 * 60; //NOTE: 10 minutes
     return await this.cloudinary.utils.private_download_url(publicId, format, {
       type: 'private',
-      resource_type,
+      resource_type: inferResourceType(resource_type),
       expires_at,
       attachment: isDownloadLink,
     });
