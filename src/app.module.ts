@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { TodoListModule } from './todo-list/todo-list.module';
 import { TodoItemModule } from './todo-item/todo-item.module';
 import { CloudinaryModule } from './fileUpload/fileUpload.module';
+import { PropertyAccessModule } from './property-access/property-access.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { CloudinaryModule } from './fileUpload/fileUpload.module';
     TodoListModule,
     TodoItemModule,
     CloudinaryModule,
+    PropertyAccessModule,
   ],
   controllers: [AppController],
   providers: [AppService],

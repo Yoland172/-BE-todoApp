@@ -1,17 +1,11 @@
-import {
-  CreateDateColumn,
-  Entity,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import TodoList from './todoList.entity';
 import User from './user.entity';
+import { AccessLevel } from './utils/types';
+import { BaseDateEntity } from './utils/base-date.entity';
 
 @Entity()
-export class TodoListShares {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class TodoListShares extends BaseDateEntity {
   @ManyToOne(() => TodoList, (item) => item.shares)
   listItem: TodoList;
 
@@ -21,6 +15,6 @@ export class TodoListShares {
   @ManyToOne(() => User, (user) => user.sharedLists)
   grantedUser: User;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  @Column({ type: 'enum', enum: AccessLevel, default: AccessLevel.READER })
+  accessLevel: AccessLevel;
 }
