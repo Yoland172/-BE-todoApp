@@ -31,7 +31,7 @@ export class TodoItemController {
 
   @Get()
   findAll(@Req() req: WithAuthRequest) {
-    return this.todoItemService.findAll(req.user.sub);
+    return this.todoItemService.findAll(req.user.sub, true);
   }
 
   @Get(':id')

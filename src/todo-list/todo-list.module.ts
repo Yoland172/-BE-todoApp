@@ -4,14 +4,14 @@ import { TodoListController } from './todo-list.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import TodoList from 'src/entities/todoList.entity';
-import { TodoListShares } from 'src/entities/todoListShare.entity';
 import { TodoItemModule } from 'src/todo-item/todo-item.module';
+import { UserTodoListAccess } from 'src/entities/userTodoListAccess.entity';
 
 @Module({
   imports: [
     TodoItemModule,
     AuthModule,
-    TypeOrmModule.forFeature([TodoList, TodoListShares]),
+    TypeOrmModule.forFeature([TodoList, UserTodoListAccess]),
   ],
   controllers: [TodoListController],
   providers: [TodoListService],

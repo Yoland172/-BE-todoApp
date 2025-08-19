@@ -29,9 +29,9 @@ export class FileUploadService {
       where: [
         { uploadedBy: { id: userId }, id: fileId },
         { id: fileId, todoList: { owner: { id: userId } } },
-        { id: fileId, todoList: { shares: { user: { id: userId } } } },
+        // { id: fileId, todoList: { shares: { user: { id: userId } } } },
         { id: fileId, todoItem: { createdBy: { id: userId } } },
-        { id: fileId, todoItem: { shares: { user: { id: userId } } } },
+        // { id: fileId, todoItem: { shares: { user: { id: userId } } } },
       ],
     });
 

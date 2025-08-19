@@ -7,9 +7,8 @@ import {
 import { CreateTodoListDto } from './dto/create-todo-list.dto';
 import { UpdateTodoListDto } from './dto/update-todo-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import TodoList from 'src/entities/todoList.entity';
-import { TodoListShares } from 'src/entities/todoListShare.entity';
 import { TodoItemService } from 'src/todo-item/todo-item.service';
 
 @Injectable()
@@ -17,8 +16,6 @@ export class TodoListService {
   constructor(
     private readonly todoItemService: TodoItemService,
     @InjectRepository(TodoList) private todoListRepo: Repository<TodoList>,
-    @InjectRepository(TodoListShares)
-    private todoListShares: Repository<TodoListShares>,
   ) {}
 
   async create(userId: number, createTodoListDto: CreateTodoListDto) {
@@ -36,44 +33,54 @@ export class TodoListService {
     }
   }
 
-  async findAll(userId: number) {
-    try {
-      const todoLists = this.todoListRepo.find({
-        where: [
-          { owner: { id: userId } },
-          { shares: { user: { id: userId } } },
-        ],
-        relations: {
-          owner: true,
-          todoItems: { createdBy: true },
-        },
-      });
-      return todoLists;
-    } catch {}
-    return `This action returns all todoList`;
+  async findAll(userId: number, includeShared: boolean = true) {
+    const baseQuery = {
+      order: { id: 'DESC' as const },
+      relations: {
+        owner: true,
+      },
+    };
+
+    const whereConditions:
+      | FindOptionsWhere<TodoList>
+      | FindOptionsWhere<TodoList>[] = includeShared
+      ? [{ owner: { id: userId } }, { accessList: { user: { id: userId } } }]
+      : { owner: { id: userId } };
+
+    return this.todoListRepo.find({
+      ...baseQuery,
+      where: whereConditions,
+    });
   }
 
   async findOne(id: number, userId: number, includeShared: boolean = true) {
-    const todoList = await this.todoListRepo.findOne({
-      where: [
-        { id, owner: { id: userId } },
-        {
-          ...(includeShared && { id, shares: { user: { id: userId } } }),
-        },
-      ],
+    const baseQuery = {} as const;
+
+    const whereConditions:
+      | FindOptionsWhere<TodoList>
+      | FindOptionsWhere<TodoList>[] = includeShared
+      ? [
+          { id: id, owner: { id: userId } },
+          { id: id, accessList: { user: { id: userId } } },
+        ]
+      : { id: id, owner: { id: userId } };
+
+    const todo = await this.todoListRepo.findOne({
       relations: {
         owner: true,
-        shares: { user: true },
+        attachments: true,
+        accessList: { user: true },
         todoItems: true,
-        attachments: { uploadedBy: true },
       },
+      ...baseQuery,
+      where: whereConditions,
     });
-    if (!todoList)
-      throw new NotFoundException(
-        'don`t exist this list or user haven`t access ',
-      );
 
-    return todoList;
+    if (!todo) {
+      throw new NotFoundException('Todo not found');
+    }
+
+    return todo;
   }
 
   async update(

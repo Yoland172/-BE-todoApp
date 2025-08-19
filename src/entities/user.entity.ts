@@ -2,8 +2,9 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import Credential from './credential.entity';
 import TodoList from './todoList.entity';
 import { TodoItem } from './todoItem.entity';
-import { TodoListShares } from './todoListShare.entity';
 import { Attachment } from './attachment.entity';
+import { UserTodoItemAccess } from './userTodoItemAccess.entity';
+import { UserTodoListAccess } from './userTodoListAccess.entity';
 
 export enum Roles {
   ADMIN = 'admin',
@@ -43,15 +44,11 @@ export default class User {
   })
   todoItems: TodoItem[];
 
-  @OneToMany(() => TodoListShares, (shareLists) => shareLists.user, {
-    cascade: true,
-  })
-  sharesLists: TodoListShares[];
+  @OneToMany(() => UserTodoItemAccess, (userTodo) => userTodo.user)
+  todoAccesses: UserTodoItemAccess[];
 
-  @OneToMany(() => TodoListShares, (shareLists) => shareLists.grantedUser, {
-    cascade: true,
-  })
-  sharedLists: TodoListShares[];
+  @OneToMany(() => UserTodoListAccess, (access) => access.user)
+  listAccess: UserTodoListAccess[];
 
   @OneToMany(() => Attachment, (attachment) => attachment.uploadedBy)
   attachments: Attachment[];

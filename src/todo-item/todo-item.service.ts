@@ -3,13 +3,17 @@ import { CreateTodoItemDto } from './dto/create-todo-item.dto';
 import { UpdateTodoItemDto } from './dto/update-todo-item.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TodoItem } from 'src/entities/todoItem.entity';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { UserTodoItemAccess } from 'src/entities/userTodoItemAccess.entity';
 
 @Injectable()
 export class TodoItemService {
   constructor(
-    @InjectRepository(TodoItem) private todoItemRepo: Repository<TodoItem>,
+    @InjectRepository(TodoItem)
+    private todoItemRepo: Repository<TodoItem>,
+    @InjectRepository(UserTodoItemAccess)
+    private accessRepo: Repository<UserTodoItemAccess>,
   ) {}
 
   async create(userId: number, createTodoItemDto: CreateTodoItemDto) {
@@ -28,40 +32,55 @@ export class TodoItemService {
     return todoItem;
   }
 
-  async findAll(userId: number) {
-    const items = await this.todoItemRepo.find({
-      where: [
-        { createdBy: { id: userId }, shares: { user: { id: userId } } },
-        { createdBy: { id: userId } },
-      ],
-    });
-
-    if (!items.length)
-      throw new NotFoundException('nothing items related to this user');
-
-    return items;
-  }
-
-  async findOne(id: number, userId: number, includeShared: boolean = true) {
-    const todoItem = await this.todoItemRepo.findOne({
-      where: [
-        { id, createdBy: { id: userId } },
-
-        {
-          ...(includeShared && { id, shares: { user: { id: userId } } }),
-        },
-      ],
+  async findAll(userId: number, includeShared: boolean = true) {
+    const baseQuery = {
+      order: { id: 'DESC' as const },
       relations: {
         createdBy: true,
-        shares: { user: true },
-        attachments: { uploadedBy: true },
       },
+    };
+
+    const whereConditions:
+      | FindOptionsWhere<TodoItem>
+      | FindOptionsWhere<TodoItem>[] = includeShared
+      ? [
+          { createdBy: { id: userId } },
+          { accessList: { user: { id: userId } } },
+        ]
+      : { createdBy: { id: userId } };
+
+    return this.todoItemRepo.find({
+      ...baseQuery,
+      where: whereConditions,
+    });
+  }
+
+  async findOne(userId: number, todoId: number, includeShared = true) {
+    const baseQuery = {
+      relations: {
+        createdBy: true,
+      },
+    } as const;
+
+    const whereConditions:
+      | FindOptionsWhere<TodoItem>
+      | FindOptionsWhere<TodoItem>[] = includeShared
+      ? [
+          { id: todoId, createdBy: { id: userId } },
+          { id: todoId, accessList: { user: { id: userId } } },
+        ]
+      : { id: todoId, createdBy: { id: userId } };
+
+    const todo = await this.todoItemRepo.findOne({
+      ...baseQuery,
+      where: whereConditions,
     });
 
-    if (!todoItem)
-      throw new NotFoundException('not found any items related to this users');
+    if (!todo) {
+      throw new NotFoundException('Todo not found');
+    }
 
-    return todoItem;
+    return todo;
   }
 
   async update(
