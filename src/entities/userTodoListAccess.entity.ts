@@ -14,11 +14,11 @@ import TodoList from './todoList.entity';
 @Index(['listId', 'role'])
 @Entity()
 export class UserTodoListAccess {
-  @PrimaryColumn()
-  userId: string;
+  @PrimaryColumn({ type: 'int' })
+  userId: number;
 
-  @PrimaryColumn()
-  listId: string;
+  @PrimaryColumn({ type: 'int' })
+  listId: number;
 
   @ManyToOne(() => User, (u) => u.listAccess, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })

@@ -34,7 +34,7 @@ export default class User {
   })
   credentials: Credential[];
 
-  @OneToMany(() => TodoList, (todoList) => todoList.owner, {
+  @OneToMany(() => TodoList, (todoList) => todoList.createdBy, {
     cascade: true,
   })
   todoLists: TodoList[];

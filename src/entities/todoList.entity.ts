@@ -4,13 +4,12 @@ import User from './user.entity';
 import { TodoItem } from './todoItem.entity';
 import { Attachment } from './attachment.entity';
 import { UserTodoListAccess } from './userTodoListAccess.entity';
-import { UserTodoItemAccess } from './userTodoItemAccess.entity';
 
 @Entity()
 export default class TodoList extends BaseDateEntity {
   @ManyToOne(() => User, (user) => user.todoLists)
   @JoinColumn({ name: 'ownerId' })
-  owner: User;
+  createdBy: User;
 
   @Column()
   title: string;
@@ -21,7 +20,7 @@ export default class TodoList extends BaseDateEntity {
   @OneToMany(() => UserTodoListAccess, (td) => td.todoList, {
     onDelete: 'CASCADE',
   })
-  accessList: UserTodoItemAccess[];
+  accessList: UserTodoListAccess[];
 
   @OneToMany(() => Attachment, (attachments) => attachments.todoList)
   attachments: Attachment[];

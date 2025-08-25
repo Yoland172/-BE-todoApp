@@ -14,11 +14,11 @@ import { AccessLevel } from './utils/types';
 @Index(['todoId', 'role'])
 @Entity()
 export class UserTodoItemAccess {
-  @PrimaryColumn()
-  userId: string;
+  @PrimaryColumn({ type: 'int' })
+  userId: number;
 
-  @PrimaryColumn()
-  todoId: string;
+  @PrimaryColumn({ type: 'int' })
+  todoId: number;
 
   @ManyToOne(() => User, (u) => u.todoAccesses, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })

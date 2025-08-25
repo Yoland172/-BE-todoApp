@@ -1,7 +1,6 @@
 import { fileTypeFromBuffer } from 'file-type';
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -28,10 +27,10 @@ export class FileUploadService {
     const file = await this.attachmentRepo.findOne({
       where: [
         { uploadedBy: { id: userId }, id: fileId },
-        { id: fileId, todoList: { owner: { id: userId } } },
-        // { id: fileId, todoList: { shares: { user: { id: userId } } } },
+        { id: fileId, todoList: { createdBy: { id: userId } } },
+        { id: fileId, todoList: { accessList: { userId: userId } } },
         { id: fileId, todoItem: { createdBy: { id: userId } } },
-        // { id: fileId, todoItem: { shares: { user: { id: userId } } } },
+        { id: fileId, todoItem: { accessList: { userId: userId } } },
       ],
     });
 

@@ -55,10 +55,16 @@ export class TodoItemService {
     });
   }
 
-  async findOne(userId: number, todoId: number, includeShared = true) {
+  async findOne(
+    userId: number,
+    todoId: number,
+    includeShared = true,
+    relationLoadStrategy: 'join' | 'query' = 'join',
+  ) {
     const baseQuery = {
       relations: {
         createdBy: true,
+        accessList: true,
       },
     } as const;
 
@@ -74,6 +80,7 @@ export class TodoItemService {
     const todo = await this.todoItemRepo.findOne({
       ...baseQuery,
       where: whereConditions,
+      relationLoadStrategy,
     });
 
     if (!todo) {

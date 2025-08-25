@@ -21,12 +21,12 @@ export class TodoListService {
   async create(userId: number, createTodoListDto: CreateTodoListDto) {
     try {
       const todoList = this.todoListRepo.create({
-        owner: { id: userId },
+        createdBy: { id: userId },
         title: createTodoListDto.title,
       });
 
       const list = await this.todoListRepo.save(todoList);
-      delete list.owner;
+      delete list.createdBy;
       return list;
     } catch {
       throw new InternalServerErrorException('Could not create todo list');
@@ -37,15 +37,18 @@ export class TodoListService {
     const baseQuery = {
       order: { id: 'DESC' as const },
       relations: {
-        owner: true,
+        createdBy: true,
       },
     };
 
     const whereConditions:
       | FindOptionsWhere<TodoList>
       | FindOptionsWhere<TodoList>[] = includeShared
-      ? [{ owner: { id: userId } }, { accessList: { user: { id: userId } } }]
-      : { owner: { id: userId } };
+      ? [
+          { createdBy: { id: userId } },
+          { accessList: { user: { id: userId } } },
+        ]
+      : { createdBy: { id: userId } };
 
     return this.todoListRepo.find({
       ...baseQuery,
@@ -53,27 +56,35 @@ export class TodoListService {
     });
   }
 
-  async findOne(id: number, userId: number, includeShared: boolean = true) {
+  async findOne(
+    id: number,
+    userId: number,
+    includeShared: boolean = true,
+    relationLoadStrategy: 'join' | 'query' = 'join',
+  ) {
+    console.log(userId, id);
+
     const baseQuery = {} as const;
 
     const whereConditions:
       | FindOptionsWhere<TodoList>
       | FindOptionsWhere<TodoList>[] = includeShared
       ? [
-          { id: id, owner: { id: userId } },
+          { id: id, createdBy: { id: userId } },
           { id: id, accessList: { user: { id: userId } } },
         ]
-      : { id: id, owner: { id: userId } };
+      : { id: id, createdBy: { id: userId } };
 
     const todo = await this.todoListRepo.findOne({
       relations: {
-        owner: true,
+        createdBy: true,
         attachments: true,
         accessList: { user: true },
         todoItems: true,
       },
       ...baseQuery,
       where: whereConditions,
+      relationLoadStrategy,
     });
 
     if (!todo) {
@@ -90,7 +101,7 @@ export class TodoListService {
   ) {
     const updatedList = await this.todoListRepo.update(
       {
-        owner: { id: userId },
+        createdBy: { id: userId },
         id,
       },
       updateTodoListDto,
@@ -103,7 +114,7 @@ export class TodoListService {
     const todoList = await this.todoListRepo.findOne({
       where: {
         id,
-        owner: { id: userId },
+        createdBy: { id: userId },
       },
     });
     if (!todoList) {

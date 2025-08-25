@@ -3,15 +3,14 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { AddMembersDto } from './dto/add-members.dto';
 import { AccessLevel } from 'src/entities/utils/types';
 import { AccessManagedResource, AccessRepo, ResourceReader } from './contracts';
 import { ROLES_PRIORITY } from './contracts';
 
-@Injectable()
-export class AccessService<R extends AccessManagedResource> {
+export abstract class AccessService<R extends AccessManagedResource> {
   constructor(
     private readonly resourceReader: ResourceReader<R>,
     private readonly accessRepo: AccessRepo,
@@ -93,11 +92,16 @@ export class AccessService<R extends AccessManagedResource> {
         (el) => el.userId === memberId,
       )?.role;
 
+      if (!memberAccessLevel) {
+        throw new NotFoundException('not found related user ');
+      }
       if (userAccessLevel === AccessLevel.READER) {
         throw new ForbiddenException(
           'user don`t have access for managing users ',
         );
       }
+
+      console.log(userAccessLevel, memberAccessLevel);
 
       if (userAccessLevel === memberAccessLevel) {
         throw new ForbiddenException('can`t delete user with same role ');
@@ -160,6 +164,7 @@ export class AccessService<R extends AccessManagedResource> {
           role: member.role,
         });
       } catch (e: any) {
+        // зберігаємо твою семантику помилки
         throw new BadRequestException(e?.message ?? 'Failed to insert access');
       }
     }
