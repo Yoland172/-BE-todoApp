@@ -5,15 +5,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TodoItem } from 'src/entities/todoItem.entity';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { UserTodoItemAccess } from 'src/entities/userTodoItemAccess.entity';
 
 @Injectable()
 export class TodoItemService {
   constructor(
     @InjectRepository(TodoItem)
     private todoItemRepo: Repository<TodoItem>,
-    @InjectRepository(UserTodoItemAccess)
-    private accessRepo: Repository<UserTodoItemAccess>,
   ) {}
 
   async create(userId: number, createTodoItemDto: CreateTodoItemDto) {

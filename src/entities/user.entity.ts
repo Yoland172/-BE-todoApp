@@ -3,8 +3,7 @@ import Credential from './credential.entity';
 import TodoList from './todoList.entity';
 import { TodoItem } from './todoItem.entity';
 import { Attachment } from './attachment.entity';
-import { UserTodoItemAccess } from './userTodoItemAccess.entity';
-import { UserTodoListAccess } from './userTodoListAccess.entity';
+import { UserPropertyAccess } from './userPropertyAccess.entity';
 
 export enum Roles {
   ADMIN = 'admin',
@@ -44,11 +43,8 @@ export default class User {
   })
   todoItems: TodoItem[];
 
-  @OneToMany(() => UserTodoItemAccess, (userTodo) => userTodo.user)
-  todoAccesses: UserTodoItemAccess[];
-
-  @OneToMany(() => UserTodoListAccess, (access) => access.user)
-  listAccess: UserTodoListAccess[];
+  @OneToMany(() => UserPropertyAccess, (userTodo) => userTodo.user)
+  propertyAccesses: UserPropertyAccess[];
 
   @OneToMany(() => Attachment, (attachment) => attachment.uploadedBy)
   attachments: Attachment[];

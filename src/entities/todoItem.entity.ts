@@ -10,7 +10,7 @@ import { BaseDateEntity } from './utils/base-date.entity';
 import TodoList from './todoList.entity';
 import User from './user.entity';
 import { Attachment } from './attachment.entity';
-import { UserTodoItemAccess } from './userTodoItemAccess.entity';
+import { UserPropertyAccess } from './userPropertyAccess.entity';
 
 export enum Status {
   BACKLOG = 'backlog',
@@ -54,8 +54,8 @@ export class TodoItem extends BaseDateEntity {
   @JoinColumn({ name: 'ownerId' })
   createdBy: User;
 
-  @OneToMany(() => UserTodoItemAccess, (userTodo) => userTodo.todoItem)
-  accessList: UserTodoItemAccess[];
+  @OneToMany(() => UserPropertyAccess, (userTodo) => userTodo.todoItem)
+  accessList: UserPropertyAccess[];
 
   @OneToMany(() => Attachment, (attachment) => attachment.todoItem)
   attachments: Attachment[];

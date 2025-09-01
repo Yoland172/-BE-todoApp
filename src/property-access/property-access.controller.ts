@@ -12,19 +12,13 @@ import {
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { WithAuthRequest } from 'src/lib/types/requests';
 import { AddMembersDto } from './dto/add-members.dto';
-import { TodoItemAccessService } from './item-access.service';
-import { TodoListAccessService } from './list-access.service';
+import { AccessService } from './property-access.service';
+import { Property } from 'src/entities/utils/types';
 
 @UseGuards(JwtAuthGuard)
 @Controller('property-access')
 export class PropertyAccessController {
-  constructor(
-    // private readonly propertyAccessService: PropertyAccessService,
-    // private readonly todoItemAccessService: TodoItemAccessService,
-
-    private readonly todoItemAccessService: TodoItemAccessService,
-    private readonly todoListAccessService: TodoListAccessService,
-  ) {}
+  constructor(private readonly accessService: AccessService) {}
 
   @Post('todo-item/:id/add')
   async addMemberToItem(
@@ -32,8 +26,9 @@ export class PropertyAccessController {
     @Param('id') itemId: string,
     @Body() body: AddMembersDto,
   ) {
-    return await this.todoItemAccessService.addMembers(
+    return await this.accessService.addMembers(
       req.user.sub,
+      Property.ITEM,
       +itemId,
       body,
     );
@@ -45,8 +40,9 @@ export class PropertyAccessController {
     @Param('id') itemId: string,
     @Body() body: AddMembersDto,
   ) {
-    return await this.todoListAccessService.addMembers(
+    return await this.accessService.addMembers(
       req.user.sub,
+      Property.LIST,
       +itemId,
       body,
     );
@@ -58,7 +54,8 @@ export class PropertyAccessController {
     @Req() req: WithAuthRequest,
     @Query('memberId') memberId: string,
   ) {
-    return this.todoListAccessService.removeMember(
+    return this.accessService.removeMember(
+      Property.LIST,
       +id,
       req.user.sub,
       +memberId,
@@ -71,7 +68,8 @@ export class PropertyAccessController {
     @Req() req: WithAuthRequest,
     @Query('memberId') memberId: string,
   ) {
-    return this.todoItemAccessService.removeMember(
+    return this.accessService.removeMember(
+      Property.ITEM,
       +id,
       req.user.sub,
       +memberId,

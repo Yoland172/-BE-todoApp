@@ -6,27 +6,35 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { AddMembersDto } from './dto/add-members.dto';
-import { AccessLevel } from 'src/entities/utils/types';
-import { AccessManagedResource, AccessRepo, ResourceReader } from './contracts';
-import { ROLES_PRIORITY } from './contracts';
+import { AccessLevel, Property } from 'src/entities/utils/types';
+import { ROLES_PRIORITY } from './utils';
+import { TodoItemService } from 'src/todo-item/todo-item.service';
+import { TodoListService } from 'src/todo-list/todo-list.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserPropertyAccess } from 'src/entities/userPropertyAccess.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
-export class AccessService<R extends AccessManagedResource> {
+export class AccessService {
   constructor(
-    private readonly resourceReader: ResourceReader<R>,
-    private readonly accessRepo: AccessRepo,
+    private readonly todoItemService: TodoItemService,
+    private readonly todoListService: TodoListService,
+    @InjectRepository(UserPropertyAccess)
+    private readonly accessRepo: Repository<UserPropertyAccess>,
   ) {}
 
   async addMembers(
     actingUserId: number,
+    propertyType: Property,
     resourceId: number,
     members: AddMembersDto,
   ) {
-    const resource = await this.resourceReader.findOne(
+    console.log(actingUserId, resourceId);
+
+    const resource = await this.loadResource(
+      propertyType,
       actingUserId,
       resourceId,
-      true,
-      'query',
     );
 
     if (members.users.some((e) => e.id === resource.createdBy.id)) {
@@ -36,7 +44,12 @@ export class AccessService<R extends AccessManagedResource> {
     const isOwner = resource.createdBy.id === actingUserId;
 
     if (isOwner) {
-      await this.processMembers(resourceId, members, actingUserId);
+      await this.processMembers(
+        propertyType,
+        resourceId,
+        members,
+        actingUserId,
+      );
     } else {
       const accessLevel = resource.accessList.find(
         (el) => el.userId === actingUserId,
@@ -49,6 +62,7 @@ export class AccessService<R extends AccessManagedResource> {
       }
 
       const failedProcessedMembers = await this.processMembers(
+        propertyType,
         resourceId,
         members,
         actingUserId,
@@ -68,6 +82,7 @@ export class AccessService<R extends AccessManagedResource> {
   }
 
   async removeMember(
+    propertyType: Property,
     resourceId: number,
     actingUserId: number,
     memberId: number,
@@ -76,11 +91,10 @@ export class AccessService<R extends AccessManagedResource> {
       throw new BadRequestException('can`t delete yourself');
     }
 
-    const resource = await this.resourceReader.findOne(
+    const resource = await this.loadResource(
+      propertyType,
       actingUserId,
       resourceId,
-      true,
-      'query',
     );
 
     const isOwner = resource.createdBy.id === actingUserId;
@@ -117,10 +131,12 @@ export class AccessService<R extends AccessManagedResource> {
       }
     }
 
-    const res = await this.accessRepo.delete({
-      userId: memberId,
-      resourceId,
-    });
+    const deleteCriteria =
+      propertyType === Property.ITEM
+        ? { userId: memberId, todoItemId: resourceId }
+        : { userId: memberId, todoListId: resourceId };
+
+    const res = await this.accessRepo.delete(deleteCriteria);
 
     return {
       message: 'successfully deleted',
@@ -129,6 +145,7 @@ export class AccessService<R extends AccessManagedResource> {
   }
 
   private async processMembers(
+    propertyType: Property,
     resourceId: number,
     members: AddMembersDto,
     actingUserId: number,
@@ -154,16 +171,52 @@ export class AccessService<R extends AccessManagedResource> {
       }
 
       try {
-        await this.accessRepo.insert({
-          userId: member.id,
-          resourceId,
-          role: member.role,
-        });
+        const payload =
+          propertyType === Property.ITEM
+            ? {
+                userId: member.id,
+                todoItemId: resourceId,
+                role: member.role,
+                propertyType,
+              }
+            : {
+                userId: member.id,
+                todoListId: resourceId,
+                role: member.role,
+                propertyType,
+              };
+
+        await this.accessRepo.insert(payload);
       } catch (e: any) {
         throw new BadRequestException(e?.message ?? 'Failed to insert access');
       }
     }
 
     return failed;
+  }
+
+  // Маршрутизація до правильного сервісу
+  private async loadResource(
+    propertyType: Property,
+    actingUserId: number,
+    resourceId: number,
+  ) {
+    if (propertyType === Property.ITEM) {
+      return this.todoItemService.findOne(
+        actingUserId,
+        resourceId,
+        true,
+        'query',
+      );
+    }
+    if (propertyType === Property.LIST) {
+      return this.todoListService.findOne(
+        resourceId,
+        actingUserId,
+        true,
+        'query',
+      );
+    }
+    throw new BadRequestException('Unknown property type');
   }
 }

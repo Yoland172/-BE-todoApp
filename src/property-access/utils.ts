@@ -1,3 +1,3 @@
 import { AccessLevel } from 'src/entities/utils/types';
 
-export const rolesPriority = [AccessLevel.READER, AccessLevel.EDITOR];
+export const ROLES_PRIORITY = [AccessLevel.READER, AccessLevel.EDITOR] as const;

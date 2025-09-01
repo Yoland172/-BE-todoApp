@@ -3,7 +3,7 @@ import { BaseDateEntity } from './utils/base-date.entity';
 import User from './user.entity';
 import { TodoItem } from './todoItem.entity';
 import { Attachment } from './attachment.entity';
-import { UserTodoListAccess } from './userTodoListAccess.entity';
+import { UserPropertyAccess } from './userPropertyAccess.entity';
 
 @Entity()
 export default class TodoList extends BaseDateEntity {
@@ -17,10 +17,10 @@ export default class TodoList extends BaseDateEntity {
   @OneToMany(() => TodoItem, (item) => item.listItem, { cascade: ['remove'] })
   todoItems: TodoItem[];
 
-  @OneToMany(() => UserTodoListAccess, (td) => td.todoList, {
+  @OneToMany(() => UserPropertyAccess, (td) => td.todoList, {
     onDelete: 'CASCADE',
   })
-  accessList: UserTodoListAccess[];
+  accessList: UserPropertyAccess[];
 
   @OneToMany(() => Attachment, (attachments) => attachments.todoList)
   attachments: Attachment[];

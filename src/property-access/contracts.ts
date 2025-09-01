@@ -1,33 +1,14 @@
-// access/contracts.ts
 import { AccessLevel } from 'src/entities/utils/types';
 
-export type AccessEntry = { userId: number; role: AccessLevel };
+export type InsertAccessPayload =
+  | { userId: number; role: AccessLevel; todoItemId: number }
+  | { userId: number; role: AccessLevel; todoListId: number };
 
-export interface AccessManagedResource {
-  id: number;
-  createdBy: { id: number };
-  accessList: AccessEntry[]; // має відповідати тому, що повертає твій findOne(..., true)
-}
-
-export interface ResourceReader<R extends AccessManagedResource> {
-  findOne(
-    userId: number,
-    resourceId: number,
-    withAccess?: boolean,
-    queryArg?: string,
-  ): Promise<R>;
-}
+export type DeleteAccessCriteria =
+  | { userId: number; todoItemId: number }
+  | { userId: number; todoListId: number };
 
 export interface AccessRepo {
-  insert(dto: {
-    userId: number;
-    resourceId: number;
-    role: AccessLevel;
-  }): Promise<void>;
-  delete(dto: {
-    userId: number;
-    resourceId: number;
-  }): Promise<{ affected?: number }>;
+  insert(payload: InsertAccessPayload): Promise<void>;
+  delete(criteria: DeleteAccessCriteria): Promise<{ affected: number }>;
 }
-
-export const ROLES_PRIORITY = [AccessLevel.READER, AccessLevel.EDITOR] as const;
